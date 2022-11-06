@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
+const SQLUtil=require("../Base/SQLUtil");
+const sqlUtil=new SQLUtil();
 // add data into table 
 router.post("/insert-data", async (req, res) => {
     var {query,values,quantity}=req.body;
@@ -12,8 +14,7 @@ router.post("/insert-data", async (req, res) => {
     if(quantity<=0||quantity==""&&Array.isArray(values)==faslse){
         return res.status(500).send("Enter value bigger than 0");
      }
-     const lowerCaseQ=query.toLowerCase();
-     if(lowerCaseQ.startsWith("insert")==false){
+     if(sqlUtil.checkToString(query,"insert")){
         return res.status(500).send("INSERT query allowed");
      }
      const para = query.slice(
@@ -79,6 +80,21 @@ router.post("/insert-data", async (req, res) => {
         return value
     }
 });
+
+router.get("/get-data",async(req,res)=>{
+    const {query}=req.body;
+    if(sqlUtil.checkToString(query,"select")){
+        return res.status(500).send("SELECT query allowed");
+     }
+    try{
+        const sql=await pool.query(
+            query
+        );
+        res.json(sql)
+    }catch(err){
+        res.status(500).send(err.message);
+    }
+});
 // Delete table route 
 router.delete("/delete-tables/:tablenames",async(req,res)=>{
     var {tablenames}=req.params;
@@ -95,18 +111,30 @@ router.delete("/delete-tables/:tablenames",async(req,res)=>{
         res.status(500).send(err.message);
     }
 });
-
 // Delete all table route 
 router.delete("/delete-tables-all",async(req,res)=>{
-    const query="DROP SCHEMA public CASCADE; CREATE SCHEMA public;";
+    const findTables="SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' and table_type='BASE TABLE';";
+    var arr=[];
     try{
-        const sql=await pool.query(
-        query
+        const sqlFind=await pool.query(
+        findTables
         );
-        res.json(sql)
+        for(var i=0; i<sqlFind.rows.length; i++){
+            arr.push(sqlFind.rows[i].table_name);
+        }
+        // delete tables
+        const query="DROP TABLE "+arr.toString();
+        try{
+            const sql=await pool.query(
+            query
+            );
+            res.json(sql)
+        }catch(errD){
+            res.status(500).send(errD.message);
+        }
+    
     }catch(err){
         res.status(500).send(err.message);
     }
 });
-
 module.exports = router;

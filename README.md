@@ -1,6 +1,7 @@
-# PostgreSql query tool  v1.1 #
+# PostgreSql Query Tool  v1.1 #
 
 ### Install and Config ##
+Markup :
  1.cd server 
  2.in terminal window write "npm install"
  3.configure the db.js to connect to your sql server and database by changing the user,password and database. Configuration of port and host maybe needed 
@@ -8,6 +9,7 @@
  5. Server running when server message says "server has started on port 5000"
 
  ### Restart Server  ##
+ Markup :
   command + S (mac)
  Control + S (window)
 
